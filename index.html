@@ -1,0 +1,57 @@
+<html>
+<head>
+</head>
+<body style="margin:0;">
+  <div style="position: fixed; background-color: white; z-index: 10;">
+    <span>pan: </span>
+    <label for="valuePanX">x</label>
+    <input type="number" id="valuePanX" min="0" max="4000" value="0" style="width:70px">
+
+    <label for="valuePanY">y</label>
+    <input type="number" id="valuePanY" min="0" max="4000" value="0" style="width:70px">
+
+    <label for="radioPan">animate</label>
+    <input type="checkbox" id="checkboxPan">
+  </div>
+<div id="svgContainer">
+</div>
+<script>
+function generateCheckerboardSVG(boardWidth, boardHeight, cellWidth, cellHeight, skip) {
+  if (!skip) skip = 1;
+  const totalWidth = cellWidth * boardWidth;
+  const totalHeight = cellHeight * boardHeight;
+  svgLines = [];
+  svgLines.push(`<svg width="${totalWidth}" height="${totalHeight}" version="1.1" xmlns="http://www.w3.org/2000/svg">`);
+  for (let col = 0; col < boardHeight; col += skip) {
+    const y = col * cellHeight;
+    for (let row = 0; row < boardWidth; row += skip) {
+      const x = row * cellWidth;
+      const color = (row + col) % 2 == 0 ? 'orange' : 'blue';
+      const line = `<rect x="${x}" y="${y}" width="${cellWidth}" height="${cellHeight}" fill="${color}" />`;
+      svgLines.push(line);
+    }
+  }
+  svgLines.push('</svg>');
+  return svgLines.join('');
+}
+svgXML = generateCheckerboardSVG(2000, 500, 50, 50);
+svgContainer.innerHTML = svgXML;
+
+valuePanX.value = Math.round(window.scrollX);
+valuePanY.value = Math.round(window.scrollY);
+
+function mainLoop(t) {
+  if (checkboxPan.checked) {
+    const x = 2000 + Math.cos(t / 4000) * 2000;
+    const y = 2000 + Math.sin(t / 4000) * 2000;
+    valuePanX.value = Math.round(x);
+    valuePanY.value = Math.round(y);
+    window.scrollTo(x, y);
+  }
+  svgContainer.style.transformOrigin = '2000px 2000px';
+  requestAnimationFrame(mainLoop);
+}
+requestAnimationFrame(mainLoop);
+</script>
+</body>
+</html>
