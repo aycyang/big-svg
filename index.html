@@ -3,24 +3,67 @@
 </head>
 <body style="margin:0;">
   <div style="position: fixed; background-color: white; z-index: 10;">
+    <button id="btnGenerateSVG">generate svg</button>
+
+    <span id="statusGenerateSVG"></span>
+
+    <br>
+
+    <span>svg options: </span>
+
+    <label for="checkboxShowOptions">show</label>
+    <input type="checkbox" id="checkboxShowOptions">
+
+    <span id="svgOptions" style="display:none;">
+
+      <span>board </span>
+
+      <label for="inputBoardWidth">width</label>
+      <input type="number" id="inputBoardWidth" min="1" max="4000" value="1000">
+
+      <label for="inputBoardHeight">height</label>
+      <input type="number" id="inputBoardHeight" min="1" max="4000" value="1000">
+
+      <span>cell </span>
+
+      <label for="inputCellWidth">width (px)</label>
+      <input type="number" id="inputCellWidth" min="1" max="1000" value="100">
+
+      <label for="inputCellHeight">height (px)</label>
+      <input type="number" id="inputCellHeight" min="1" max="1000" value="100">
+
+      <label for="inputSkip">skip</label>
+      <input type="number" id="inputSkip" min="1" max="8" value="1">
+
+    </span>
+
+    <br>
+
     <span>pan: </span>
-    <label for="valuePanX">x</label>
-    <input type="number" id="valuePanX" min="0" max="4000" value="0" style="width:70px">
 
-    <label for="valuePanY">y</label>
-    <input type="number" id="valuePanY" min="0" max="4000" value="0" style="width:70px">
+    <label for="inputPanX">x</label>
+    <input type="number" id="inputPanX" min="0" max="4000" value="0" style="width:70px" disabled>
 
-    <label for="radioPan">animate</label>
-    <input type="checkbox" id="checkboxPan">
+    <label for="inputPanY">y</label>
+    <input type="number" id="inputPanY" min="0" max="4000" value="0" style="width:70px" disabled>
+
+    <label for="checkboxPanAnimate">animate</label>
+    <input type="checkbox" id="checkboxPanAnimate" disabled>
   </div>
 <div id="svgContainer">
 </div>
 <script>
+'use strict';
+
 function generateCheckerboardSVG(boardWidth, boardHeight, cellWidth, cellHeight, skip) {
-  if (!skip) skip = 1;
+  if (!skip) {
+    skip = 1;
+  } else {
+    skip = parseInt(skip, 10);
+  }
   const totalWidth = cellWidth * boardWidth;
   const totalHeight = cellHeight * boardHeight;
-  svgLines = [];
+  const svgLines = [];
   svgLines.push(`<svg width="${totalWidth}" height="${totalHeight}" version="1.1" xmlns="http://www.w3.org/2000/svg">`);
   for (let col = 0; col < boardHeight; col += skip) {
     const y = col * cellHeight;
@@ -32,26 +75,68 @@ function generateCheckerboardSVG(boardWidth, boardHeight, cellWidth, cellHeight,
     }
   }
   svgLines.push('</svg>');
-  return svgLines.join('');
+  return [svgLines.join(''), svgLines.length - 2];
 }
-svgXML = generateCheckerboardSVG(2000, 500, 50, 50);
-svgContainer.innerHTML = svgXML;
 
-valuePanX.value = Math.round(window.scrollX);
-valuePanY.value = Math.round(window.scrollY);
+function generateSVG() {
+  const [svgXML, numRects] = generateCheckerboardSVG(
+  inputBoardWidth.value,
+  inputBoardHeight.value,
+  inputCellWidth.value,
+  inputCellHeight.value,
+  inputSkip.value);
+  svgContainer.innerHTML = svgXML;
+  return numRects;
+}
+
+btnGenerateSVG.addEventListener('click', (event) => {
+  const start = Date.now();
+  btnGenerateSVG.disabled = true;
+  inputPanX.disabled = true;
+  inputPanY.disabled = true;
+  checkboxPanAnimate.disabled = true;
+  statusGenerateSVG.innerHTML = 'generating...';
+  // setTimeout(fn, 0) is a hack to allow UI to update before kicking off generation procedure
+  setTimeout(() => {
+    const numRects = generateSVG();
+    const elapsed = Date.now() - start;
+    btnGenerateSVG.disabled = false;
+    inputPanX.disabled = false;
+    inputPanY.disabled = false;
+    checkboxPanAnimate.disabled = false;
+    statusGenerateSVG.innerHTML = `generated SVG with ${numRects.toLocaleString()} rects in ${elapsed} millisecond(s).`;
+  }, 0);
+});
+
+checkboxShowOptions.addEventListener('change', event => {
+  if (checkboxShowOptions.checked) {
+    svgOptions.style.display = '';
+  } else {
+    svgOptions.style.display = 'none';
+  }
+});
+
+inputPanX.addEventListener('change', event => {
+  window.scrollTo(inputPanX.value, inputPanY.value);
+});
+
+inputPanY.addEventListener('change', event => {
+  window.scrollTo(inputPanX.value, inputPanY.value);
+});
 
 function mainLoop(t) {
-  if (checkboxPan.checked) {
+  if (checkboxPanAnimate.checked) {
     const x = 2000 + Math.cos(t / 4000) * 2000;
     const y = 2000 + Math.sin(t / 4000) * 2000;
-    valuePanX.value = Math.round(x);
-    valuePanY.value = Math.round(y);
+    inputPanX.value = Math.round(x);
+    inputPanY.value = Math.round(y);
     window.scrollTo(x, y);
   }
-  svgContainer.style.transformOrigin = '2000px 2000px';
   requestAnimationFrame(mainLoop);
 }
+
 requestAnimationFrame(mainLoop);
+
 </script>
 </body>
 </html>

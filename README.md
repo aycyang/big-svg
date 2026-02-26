@@ -1,2 +1,7 @@
 # big-svg
-Minimal reproduction of browser SVG performance
+
+Test page for browser SVG scrolling performance
+
+### TODO
+
+- [ ] FPS display and graph
